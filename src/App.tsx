@@ -1,6 +1,7 @@
 import React from 'react';
-import { PermissionsAndroid, StyleSheet, View } from 'react-native';
+import { Alert, PermissionsAndroid, StyleSheet, View } from 'react-native';
 import Contacts, { Contact, PhoneNumber } from 'react-native-contacts';
+import SmsAndroid from 'react-native-sms-android';
 
 import { AppColors } from './Colors';
 import { MyButton } from './components/Button';
@@ -23,7 +24,6 @@ export default class App extends React.PureComponent<{}, AppState> {
     if (this.state.contacts.length == 0) {
       this.requestConntactsPermission();
     }
-    this.requestSmsPermission();
   }
 
   public render() {
@@ -55,14 +55,14 @@ export default class App extends React.PureComponent<{}, AppState> {
         <View style={styles.conteiner2}>
         <MyButton
           text={'HISTORY'}
-          style={AppColors.themeL3}
+          style={AppColors.themeL4}
           onPress={() => {
             alert('history');
           }}
         />
         <MyButton
           text={'MEET'}
-          style={AppColors.themeL2}
+          style={AppColors.themeL4}
           onPress={this.onMeetPress}
         />
         </View>
@@ -82,24 +82,62 @@ export default class App extends React.PureComponent<{}, AppState> {
     return `${reciver.givenName} please meet ${contact.givenName}. Phone number is ${phoneNumber}`;
   }
 
+  private sendSms(phoneNumber: string, smsContent: string) {
+    return new Promise((resolve, reject) => {
+      SmsAndroid.sms(phoneNumber, smsContent, 'sendDirect', (err: string, message: string) => {
+        if (!err) {
+          resolve(message);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
   private onMeetPress = () => {
-    // alert(`${this.state.firstContact} ${this.state.secondContact}`);
-    const { contacts, firstContact, secondContact } = this.state;
-    const contact1 = contacts[firstContact as number];
-    const contact2 = contacts[secondContact as number];
-    if (contact1 && contact2) {
-      const phoneNumber1 = this.getMobilePhoneNumber(contact1);
-      const phoneNumber2 = this.getMobilePhoneNumber(contact2);
-      if (phoneNumber1 &&  phoneNumber2) {
-        const msg1 = this.getMsg(contact1, contact2, phoneNumber2);
-        const msg2 = this.getMsg(contact2, contact1, phoneNumber1);
-        alert(msg1 + '\n' + msg2);
-      }
+    const { contacts, firstContact = -1, secondContact = 1 } = this.state;
+    if (firstContact == secondContact) {
+      return;
     }
+
+    const contact1 = contacts[firstContact];
+    const contact2 = contacts[secondContact];
+    if (!contact1 || !contact2) {
+      return;
+    }
+
+    const phoneNumber1 = this.getMobilePhoneNumber(contact1);
+    const phoneNumber2 = this.getMobilePhoneNumber(contact2);
+    if (!phoneNumber1 || !phoneNumber2) {
+      return;
+    }
+
+    const msg1 = this.getMsg(contact1, contact2, phoneNumber2);
+    const msg2 = this.getMsg(contact2, contact1, phoneNumber1);
+
+    const sendMsessages = () => {
+      this.sendSms(phoneNumber1, msg1).then(() => {
+        this.sendSms(phoneNumber2, msg2).then(() => {
+          Alert.alert('Sending invitations', 'Sendig messages success');
+        }).catch(() => {
+          Alert.alert('Error', 'Somethig goes wrong');
+        });
+      }).catch(() => {
+        Alert.alert('Error', 'Somethig goes wrong');
+      });
+    };
+
+    Alert.alert(
+      'Sending invitations',
+      `Do you want to send invitations?\n${msg1}\n${msg2}`,
+      [
+        { text: 'Cancel', onPress: () => { /**/ }, style: 'cancel'},
+        { text: 'OK', onPress: sendMsessages },
+      ],
+    );
   }
 
   private async requestConntactsPermission() {
-    try {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.READ_CONTACTS,
         {
@@ -109,40 +147,12 @@ export default class App extends React.PureComponent<{}, AppState> {
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         Contacts.getAll((err, contacts: Contact[]) => {
-          if (err) {
-            throw err;
-          }  else {
-            console.log(contacts);
+          if (!err) {
             this.setState({ contacts });
           }
         });
-      } else {
-        console.log('Conntacts permission denied');
-        // TODO exit app
       }
-    } catch (err) {
-      console.warn(err);
-      // ?
-    }
-  }
-
-  private async requestSmsPermission() {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.SEND_SMS,
-        {
-          title: 'SMS permission',
-          message: 'We need permisson to send SMS',
-        },
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can send SMS');
-      } else {
-        console.log('SMS permission denied');
-      }
-    } catch (err) {
-      console.warn(err);
-    }
+      // TODO error handling
   }
 }
 
