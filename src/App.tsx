@@ -63,12 +63,12 @@ export default class App extends React.PureComponent<{}, AppState> {
           <View style={styles.listsContainer}>
             <ContactsList
               data={contacts}
-              style={styles.contactsListLeft}
+              style={styles.contactsList}
               onItemSelectionChange={(id) => this.setState({firstContact: id})}
             />
             <ContactsList
               data={contacts}
-              style={styles.contactsListRight}
+              style={styles.contactsList}
               onItemSelectionChange={(id) => this.setState({secondContact: id})}
             />
           </View>
@@ -221,16 +221,11 @@ const styles = StyleSheet.create({
       flex: 1,
       flexDirection: 'row',
     },
-    AppColors.themeL3,
+    AppColors.themeL4,
   ]),
-  contactsListLeft: StyleSheet.flatten([
-    { flex: 1 },
-    AppColors.themeL3,
-  ]),
-  contactsListRight: StyleSheet.flatten([
-    { flex: 1 },
-    AppColors.themeL3,
-  ]),
+  contactsList: {
+    flex: 1,
+  },
   header: StyleSheet.flatten([
     {
       height: 60,
