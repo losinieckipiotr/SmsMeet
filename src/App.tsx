@@ -135,7 +135,6 @@ export default class App extends React.PureComponent<{}, AppState> {
 
   private sendSms(phoneNumber: string, smsContent: string) {
     return new Promise((resolve, reject) => {
-      resolve('success');
       SmsAndroid.sms(phoneNumber, smsContent, 'sendDirect', (err: string, message: string) => {
         if (!err) {
           resolve(message);
