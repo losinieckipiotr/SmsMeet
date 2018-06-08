@@ -9,7 +9,7 @@ const styles = StyleSheet.create({
   separator: StyleSheet.flatten([
    {
     alignSelf: 'center',
-    width: '62.5%',
+    width: '80%',
     height: 1,
    },
    AppColors.separator,

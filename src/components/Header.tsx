@@ -1,32 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { AppColors } from '../Colors';
 
 interface HeaderProps {
   text: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 const Header = (props: HeaderProps) => {
   return (
-    <View style={styles.header}>
+    <View style={props.style}>
+      <View style={{flex: 1}}/>
       <Text style={styles.message}>{props.text}</Text>
+      <View style={{flex: 1}}/>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  header: StyleSheet.flatten([
-    {
-      height: 50,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 2,
-    },
-    AppColors.themeD1,
-  ]),
   message: StyleSheet.flatten([
-    { fontSize: 16 },
+    { fontSize: 16, textAlign: 'center' },
     AppColors.textHeder,
   ]),
 });

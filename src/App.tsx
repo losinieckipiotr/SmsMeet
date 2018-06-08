@@ -1,14 +1,25 @@
 import React from 'react';
-import { Alert, AsyncStorage, PermissionsAndroid, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  AsyncStorage,
+  LayoutAnimation,
+  PermissionsAndroid,
+  StyleSheet,
+  UIManager,
+  View,
+} from 'react-native';
 import Contacts, { Contact, PhoneNumber } from 'react-native-contacts';
 import SmsAndroid from 'react-native-sms-android';
 
 import { AppColors } from './Colors';
 import { ContactsList } from './components/ContactsList';
-import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { History } from './components/History';
-import { HistoryValue } from './components/HistoryList';
+import { HistoryList, HistoryValue } from './components/HistoryList';
+import { MyButton } from './components/MyButton';
+
+if (UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 interface AppState {
   contacts: Contact[];
@@ -38,40 +49,50 @@ export default class App extends React.PureComponent<{}, AppState> {
 
   public render() {
     const { contacts, showHistory, history } = this.state;
-    if (showHistory) {
-      return (
-        <View style={{flex: 1}}>
-          <History
-            data={history}
-            onBackPress={this.onHistoryPress}
-          />
-        </View>
-      );
-    }
+    const headerText = showHistory ? 'History' : 'Invite your contacts to meet each other';
+
     return (
       <View style={{flex: 1}}>
-        <Header text={'Invite your contacts to meet each other'}/>
-        <View style={styles.listsContainer}>
-          <ContactsList
-            data={contacts}
-            style={styles.contactsListLeft}
-            onItemSelectionChange={(id) => this.setState({firstContact: id})}
+        <Header style={styles.header} text={headerText}/>
+        {showHistory &&
+          <View style={styles.listsContainer}>
+            <HistoryList data={history}/>
+          </View>
+        }
+        {!showHistory &&
+          <View style={styles.listsContainer}>
+            <ContactsList
+              data={contacts}
+              style={styles.contactsListLeft}
+              onItemSelectionChange={(id) => this.setState({firstContact: id})}
             />
-          <ContactsList
-            data={contacts}
-            style={styles.contactsListRight}
-            onItemSelectionChange={(id) => this.setState({secondContact: id})}
-          />
+            <ContactsList
+              data={contacts}
+              style={styles.contactsListRight}
+              onItemSelectionChange={(id) => this.setState({secondContact: id})}
+            />
+          </View>
+        }
+        <View style={styles.footer}>
+          <MyButton
+            text={showHistory ? 'BACK' : 'HISTORY'}
+            style={AppColors.themeL4}
+            onPress={this.onHistoryPress}
+            />
+          {!showHistory &&
+            <MyButton
+              text={'MEET'}
+              style={AppColors.themeL4}
+              onPress={this.onMeetPress}
+            />
+          }
         </View>
-        <Footer
-          onHistoryPress={this.onHistoryPress}
-          onMeetPress={this.onMeetPress}
-        />
       </View>
     );
   }
 
   private onHistoryPress = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     this.setState((prevState) => {
       return {
         showHistory: !prevState.showHistory,
@@ -195,16 +216,36 @@ export default class App extends React.PureComponent<{}, AppState> {
 }
 
 const styles = StyleSheet.create({
-  listsContainer: {
-    flex: 1,
-    flexDirection: 'row',
-  },
+  listsContainer: StyleSheet.flatten([
+    {
+      flex: 1,
+      flexDirection: 'row',
+    },
+    AppColors.themeL3,
+  ]),
   contactsListLeft: StyleSheet.flatten([
     { flex: 1 },
-    AppColors.themeL4,
+    AppColors.themeL3,
   ]),
   contactsListRight: StyleSheet.flatten([
     { flex: 1 },
     AppColors.themeL3,
+  ]),
+  header: StyleSheet.flatten([
+    {
+      height: 60,
+      elevation: 5,
+    },
+    AppColors.themeD1,
+  ]),
+  footer: StyleSheet.flatten([
+    {
+      height: 60,
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      elevation: 5,
+    },
+    AppColors.themeD1,
   ]),
 });

@@ -20,8 +20,9 @@ const MyButton = (props: MyButtonProps) => {
 const styles = StyleSheet.create({
   default: StyleSheet.flatten([
     {
-      width: 100,
-      height: 50,
+      height: 40,
+      flex: 1,
+      margin: 20,
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 3,

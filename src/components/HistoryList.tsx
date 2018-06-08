@@ -28,6 +28,7 @@ class HistoryList extends React.PureComponent<HistoryListProps> {
   public render() {
     return (
       <FlatList
+      showsVerticalScrollIndicator={false}
         style={styles.container}
         data={this.props.data}
         renderItem={(item: ListRenderItemInfo<HistoryValue>) => <HistoryListItem item={item.item}/>}

@@ -61,6 +61,8 @@ class ContactsList extends React.PureComponent<ContactsListProps, ContactsListSt
     const { data, style } = this.props;
     return (
       <FlatList
+        showsVerticalScrollIndicator={false}
+        snapToAlignment={'start'}
         style={style}
         data={data}
         renderItem={this.renderItem}
@@ -109,14 +111,6 @@ const styles = StyleSheet.create({
     AppColors.textThemeLight,
   ]),
   buttonSelected: AppColors.selectedTextTheme,
-  separator: StyleSheet.flatten([
-    {
-      alignSelf: 'center',
-      width: '62.5%',
-      height: 1,
-    },
-    AppColors.themeL2,
-  ]),
 });
 
 export {
