@@ -6,11 +6,12 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
   ViewStyle,
 } from 'react-native';
 import { Contact } from 'react-native-contacts';
+
 import { AppColors } from '../Colors';
+import { Separator } from './Separator';
 
 interface MenuItemProps {
   id: number;
@@ -27,10 +28,10 @@ class MenuItem extends React.PureComponent<MenuItemProps> {
     const selectedStyle = selected ? styles.buttonSelected : {};
     return (
       <TouchableOpacity
-        style={[styles.buttonContainer]}
+        style={styles.menuItem}
         onPress={() => onPress(id)}
       >
-        <Text style={[styles.buttonText, selectedStyle]}>{fullName}</Text>
+        <Text style={[styles.menuItemText, selectedStyle]}>{fullName}</Text>
       </TouchableOpacity>
     );
   }
@@ -40,6 +41,7 @@ interface ContactsListProps {
   data: Contact[];
   style: StyleProp<ViewStyle>;
   onItemSelectionChange: (id: number | undefined) => void;
+  // TODO menuItemStyle, separatorStyle
 }
 
 interface ContactsListState {
@@ -95,30 +97,18 @@ class ContactsList extends React.PureComponent<ContactsListProps, ContactsListSt
   }
 }
 
-const Separator = () => {
-  return (
-    <View
-      style={[
-        { alignSelf: 'center', width: '62.5%', height: 1 },
-        AppColors.themeL2,
-      ]}
-    />
-  );
-};
-
 const styles = StyleSheet.create({
-  buttonContainer: {
+  menuItem: {
     width: '100%',
     height: 60,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 3,
   },
-  buttonText: {
-    fontSize: 16,
-    color: '#ffffff',
-  },
-  buttonSelected: AppColors.textTheme,
+  menuItemText: StyleSheet.flatten([
+    { fontSize: 16 },
+    AppColors.textThemeLight,
+  ]),
+  buttonSelected: AppColors.selectedTextTheme,
   separator: StyleSheet.flatten([
     {
       alignSelf: 'center',

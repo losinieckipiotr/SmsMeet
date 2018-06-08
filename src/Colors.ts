@@ -10,18 +10,14 @@ const AppColors = {
   themeD4: { backgroundColor: '#085a9d' },
   themeD5: { backgroundColor: '#074b83' },
 
-  theme: { backgroundColor: '#2196f3' },
-  textTheme: { color: '#2196f3' },
+  action: { backgroundColor: '#2196f3' },
+  textThemeLight: { color: 'rgba(0, 0, 0, 0.5)' },
+  textThemeDark: { color: 'rgba(0, 0, 0, 1)' },
+  textHeder: { color: 'rgb(255, 255, 255)' },
+  separator: { backgroundColor: 'rgba(0, 0, 0, 0.5)' } ,
+  selectedTextTheme: { color: '#2196f3' },
   borderTheme: { borderColor: '#2196f3' },
 };
-
-// .w3-theme-light {color:#000 !important; background-color:#f2f9fe !important}
-// .w3-theme-dark {color:#fff !important; background-color:#074b83 !important}
-// .w3-theme-action {color:#fff !important; background-color:#074b83 !important}
-
-// .w3-hover-theme:hover {color:#fff !important; background-color:#2196f3 !important}
-// .w3-hover-text-theme:hover {color:#2196f3 !important}
-// .w3-hover-border-theme:hover {border-color:#2196f3 !important}
 
 export {
   AppColors,

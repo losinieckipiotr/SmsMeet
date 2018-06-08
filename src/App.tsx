@@ -1,16 +1,21 @@
 import React from 'react';
-import { Alert, PermissionsAndroid, StyleSheet, View } from 'react-native';
+import { Alert, AsyncStorage, PermissionsAndroid, StyleSheet, View } from 'react-native';
 import Contacts, { Contact, PhoneNumber } from 'react-native-contacts';
 import SmsAndroid from 'react-native-sms-android';
 
 import { AppColors } from './Colors';
-import { MyButton } from './components/Button';
 import { ContactsList } from './components/ContactsList';
+import { Footer } from './components/Footer';
+import { Header } from './components/Header';
+import { History } from './components/History';
+import { HistoryValue } from './components/HistoryList';
 
 interface AppState {
   contacts: Contact[];
   firstContact?: number;
   secondContact?: number;
+  showHistory: boolean;
+  history: HistoryValue[];
 }
 
 export default class App extends React.PureComponent<{}, AppState> {
@@ -18,79 +23,59 @@ export default class App extends React.PureComponent<{}, AppState> {
     super(props);
     this.state = {
       contacts: [],
+      firstContact: undefined,
+      secondContact: undefined,
+      showHistory: false,
+      history: [],
     };
   }
   public componentDidMount() {
     if (this.state.contacts.length == 0) {
       this.requestConntactsPermission();
     }
+    this.getHistory();
   }
 
   public render() {
-    const { contacts } = this.state;
+    const { contacts, showHistory, history } = this.state;
+    if (showHistory) {
+      return (
+        <View style={{flex: 1}}>
+          <History
+            data={history}
+            onBackPress={this.onHistoryPress}
+          />
+        </View>
+      );
+    }
     return (
       <View style={{flex: 1}}>
-        <View style={styles.container}>
+        <Header text={'Invite your contacts to meet each other'}/>
+        <View style={styles.listsContainer}>
           <ContactsList
             data={contacts}
-            style={[
-              { flex: 1 },
-              AppColors.themeD1,
-            ]}
-            onItemSelectionChange={(id) => {
-              this.setState({firstContact: id});
-            }}
+            style={styles.contactsListLeft}
+            onItemSelectionChange={(id) => this.setState({firstContact: id})}
             />
           <ContactsList
             data={contacts}
-            style={[
-              { flex: 1 },
-              AppColors.themeD2,
-            ]}
-            onItemSelectionChange={(id) => {
-              this.setState({secondContact: id});
-            }}
+            style={styles.contactsListRight}
+            onItemSelectionChange={(id) => this.setState({secondContact: id})}
           />
         </View>
-        <View style={styles.conteiner2}>
-        <MyButton
-          text={'HISTORY'}
-          style={AppColors.themeL4}
-          onPress={() => {
-            alert('history');
-          }}
+        <Footer
+          onHistoryPress={this.onHistoryPress}
+          onMeetPress={this.onMeetPress}
         />
-        <MyButton
-          text={'MEET'}
-          style={AppColors.themeL4}
-          onPress={this.onMeetPress}
-        />
-        </View>
       </View>
     );
   }
 
-  private getMobilePhoneNumber = (contact: Contact): string => {
-    const phoneNumber: PhoneNumber | undefined = contact.phoneNumbers.find((n) => n.label == 'mobile');
-    if (phoneNumber) {
-      return phoneNumber.number;
-    }
-    return '';
-  }
-
-  private getMsg = (reciver: Contact, contact: Contact, phoneNumber: string): string => {
-    return `${reciver.givenName} please meet ${contact.givenName}. Phone number is ${phoneNumber}`;
-  }
-
-  private sendSms(phoneNumber: string, smsContent: string) {
-    return new Promise((resolve, reject) => {
-      SmsAndroid.sms(phoneNumber, smsContent, 'sendDirect', (err: string, message: string) => {
-        if (!err) {
-          resolve(message);
-        } else {
-          reject(err);
-        }
-      });
+  private onHistoryPress = () => {
+    this.setState((prevState) => {
+      return {
+        showHistory: !prevState.showHistory,
+      };
     });
   }
 
@@ -118,12 +103,23 @@ export default class App extends React.PureComponent<{}, AppState> {
     const sendMsessages = () => {
       this.sendSms(phoneNumber1, msg1).then(() => {
         this.sendSms(phoneNumber2, msg2).then(() => {
-          Alert.alert('Sending invitations', 'Sendig messages success');
+          this.setState((prevState) => {
+            const newHistory = prevState.history.slice();
+            newHistory.unshift({
+              date: new Date(),
+              value: `${contact1.givenName} ${contact2.givenName}`,
+            });
+            this.saveHistory(newHistory);
+            return {
+              history: newHistory,
+            };
+          });
+          Alert.alert('Sending invitations', 'Invitations sent succesfully!');
         }).catch(() => {
-          Alert.alert('Error', 'Somethig goes wrong');
+          Alert.alert('Error', 'Something  goes wrong');
         });
       }).catch(() => {
-        Alert.alert('Error', 'Somethig goes wrong');
+        Alert.alert('Error', 'Something  goes wrong');
       });
     };
 
@@ -131,10 +127,23 @@ export default class App extends React.PureComponent<{}, AppState> {
       'Sending invitations',
       `Do you want to send invitations?\n${msg1}\n${msg2}`,
       [
-        { text: 'Cancel', onPress: () => { /**/ }, style: 'cancel'},
+        { text: 'Cancel', onPress: () => { /* just hide alert */ }, style: 'cancel'},
         { text: 'OK', onPress: sendMsessages },
       ],
     );
+  }
+
+  private sendSms(phoneNumber: string, smsContent: string) {
+    return new Promise((resolve, reject) => {
+      resolve('success');
+      SmsAndroid.sms(phoneNumber, smsContent, 'sendDirect', (err: string, message: string) => {
+        if (!err) {
+          resolve(message);
+        } else {
+          reject(err);
+        }
+      });
+    });
   }
 
   private async requestConntactsPermission() {
@@ -148,39 +157,55 @@ export default class App extends React.PureComponent<{}, AppState> {
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         Contacts.getAll((err, contacts: Contact[]) => {
           if (!err) {
+            if (contacts.length == 0) {
+              Alert.alert('Empty contacts list', 'Your contacts list is empty');
+            }
             this.setState({ contacts });
           }
         });
       }
       // TODO error handling
   }
+
+  private async getHistory() {
+    const historyJSON = await AsyncStorage.getItem('history');
+    if (historyJSON === null) {
+      AsyncStorage.setItem('history', JSON.stringify([]));
+    } else {
+      const history = JSON.parse(historyJSON) as HistoryValue[];
+      this.setState({ history });
+    }
+  }
+
+  private async saveHistory(newHistory: HistoryValue[]) {
+    const historyJSON = JSON.stringify(newHistory);
+    return AsyncStorage.setItem('history', historyJSON);
+  }
+
+  private getMobilePhoneNumber = (contact: Contact): string => {
+    const phoneNumber: PhoneNumber | undefined = contact.phoneNumbers.find((n) => n.label == 'mobile');
+    if (phoneNumber) {
+      return phoneNumber.number;
+    }
+    return '';
+  }
+
+  private getMsg = (reciver: Contact, contact: Contact, phoneNumber: string): string => {
+    return `${reciver.givenName} please meet ${contact.givenName}. Phone number is ${phoneNumber}`;
+  }
 }
 
 const styles = StyleSheet.create({
-  container: {
+  listsContainer: {
     flex: 1,
     flexDirection: 'row',
   },
-  conteiner2: {
-    height: 75,
-    backgroundColor: '#2196f3',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  list: {
-    flex: 1,
-    height: '100%',
-    backgroundColor: 'grey',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
+  contactsListLeft: StyleSheet.flatten([
+    { flex: 1 },
+    AppColors.themeL4,
+  ]),
+  contactsListRight: StyleSheet.flatten([
+    { flex: 1 },
+    AppColors.themeL3,
+  ]),
 });
